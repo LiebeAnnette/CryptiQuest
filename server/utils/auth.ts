@@ -37,7 +37,9 @@ export function authMiddleware({ req }: { req: AuthRequest }): {
   }
 
   try {
+    console.log("Received token:", token);
     const { data } = jwt.verify(token, secret) as { data: AuthUser };
+    console.log("Decoded user from token:", data); // ← Add this line
     req.user = data;
   } catch {
     console.log("Invalid token");

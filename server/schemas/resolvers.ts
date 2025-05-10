@@ -2,12 +2,18 @@ import { User, IUser, IUserDocument } from "../models";
 import { signToken, AuthUser } from "../utils/auth";
 import { AuthenticationError } from "apollo-server-express";
 import { Types } from "mongoose";
+import { Request } from "express";
 
 const resolvers = {
   Query: {
-    me: async (_parent: unknown, _args: unknown, context: { user?: AuthUser }) => {
-      if (context.user) {
-        return User.findById(context.user._id).populate([
+    me: async (
+      _parent: unknown,
+      _args: unknown,
+      context: { req: { user?: AuthUser } }
+    ) => {
+      const user = context.req?.user;
+      if (user) {
+        return User.findById(user._id).populate([
           "savedCryptids",
           "savedLocations",
         ]);
