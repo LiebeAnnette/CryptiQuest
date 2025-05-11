@@ -3,6 +3,7 @@ import { signToken, AuthUser } from "../utils/auth";
 import { AuthenticationError } from "apollo-server-express";
 import { Types } from "mongoose";
 import { Request } from "express";
+import { Cryptid } from "../models";
 
 const resolvers = {
   Query: {
@@ -23,6 +24,12 @@ const resolvers = {
 
     users: async () => {
       return User.find({}).populate(["savedCryptids", "savedLocations"]);
+    },
+    cryptids: async (_parent: unknown, args: { state?: string }) => {
+      if (args.state) {
+        return Cryptid.find({ region: args.state });
+      }
+      return Cryptid.find({});
     },
   },
 
@@ -64,6 +71,35 @@ const resolvers = {
 
       const token = signToken(user);
       return { token, user: userDoc };
+    },
+    addCryptid: async (
+      _parent: unknown,
+      {
+        name,
+        region,
+        description,
+        image,
+      }: { name: string; region: string; description?: string; image?: string }
+    ) => {
+      return Cryptid.create({ name, region, description, image });
+    },
+    saveCryptid: async (
+      _parent: unknown,
+      { cryptidId }: { cryptidId: string },
+      context: { req: { user?: AuthUser } }
+    ) => {
+      const user = context.req?.user;
+      if (!user) {
+        throw new AuthenticationError(
+          "You must be logged in to save a cryptid."
+        );
+      }
+
+      return User.findByIdAndUpdate(
+        user._id,
+        { $addToSet: { savedCryptids: cryptidId } }, // avoids duplicates
+        { new: true }
+      ).populate(["savedCryptids", "savedLocations"]);
     },
   },
 };

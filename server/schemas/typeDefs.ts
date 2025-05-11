@@ -44,6 +44,12 @@ const typeDefs = gql`
     saveLocation(locationId: ID!): User
     removeCryptid(cryptidId: ID!): User
     removeLocation(locationId: ID!): User
+    addCryptid(
+      name: String!
+      region: String!
+      description: String
+      image: String
+    ): Cryptid
   }
 `;
 
