@@ -101,6 +101,24 @@ const resolvers = {
         { new: true }
       ).populate(["savedCryptids", "savedLocations"]);
     },
+    removeCryptid: async (
+      _parent: unknown,
+      { cryptidId }: { cryptidId: string },
+      context: { req: { user?: AuthUser } }
+    ) => {
+      const user = context.req?.user;
+      if (!user) {
+        throw new AuthenticationError(
+          "You must be logged in to remove a cryptid."
+        );
+      }
+
+      return User.findByIdAndUpdate(
+        user._id,
+        { $pull: { savedCryptids: cryptidId } },
+        { new: true }
+      ).populate(["savedCryptids", "savedLocations"]);
+    },
   },
 };
 
