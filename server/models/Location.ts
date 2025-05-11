@@ -1,6 +1,13 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Document } from "mongoose";
 
-const locationSchema = new Schema({
+export interface ILocation extends Document {
+  name: string;
+  state: string;
+  legend: string;
+  address?: string;
+}
+
+const locationSchema = new Schema<ILocation>({
   name: {
     type: String,
     required: true,
@@ -11,11 +18,12 @@ const locationSchema = new Schema({
   },
   legend: {
     type: String,
+    required: true,
   },
   address: {
     type: String,
   },
 });
 
-const Location = model("Location", locationSchema);
+const Location = model<ILocation>("Location", locationSchema);
 export default Location;

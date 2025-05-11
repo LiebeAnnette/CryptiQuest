@@ -4,6 +4,7 @@ import { AuthenticationError } from "apollo-server-express";
 import { Types } from "mongoose";
 import { Request } from "express";
 import { Cryptid } from "../models";
+import { Location } from "../models";
 
 const resolvers = {
   Query: {
@@ -30,6 +31,12 @@ const resolvers = {
         return Cryptid.find({ region: args.state });
       }
       return Cryptid.find({});
+    },
+    locations: async (_parent: unknown, args: { state?: string }) => {
+      if (args.state) {
+        return Location.find({ state: args.state });
+      }
+      return Location.find({});
     },
   },
 
@@ -116,6 +123,55 @@ const resolvers = {
       return User.findByIdAndUpdate(
         user._id,
         { $pull: { savedCryptids: cryptidId } },
+        { new: true }
+      ).populate(["savedCryptids", "savedLocations"]);
+    },
+    addLocation: async (
+      _parent: unknown,
+      {
+        name,
+        state,
+        legend,
+        address,
+      }: { name: string; state: string; legend: string; address?: string }
+    ) => {
+      return Location.create({ name, state, legend, address });
+    },
+
+    saveLocation: async (
+      _parent: unknown,
+      { locationId }: { locationId: string },
+      context: { req: { user?: AuthUser } }
+    ) => {
+      const user = context.req?.user;
+      if (!user) {
+        throw new AuthenticationError(
+          "You must be logged in to save a location."
+        );
+      }
+
+      return User.findByIdAndUpdate(
+        user._id,
+        { $addToSet: { savedLocations: locationId } },
+        { new: true }
+      ).populate(["savedCryptids", "savedLocations"]);
+    },
+
+    removeLocation: async (
+      _parent: unknown,
+      { locationId }: { locationId: string },
+      context: { req: { user?: AuthUser } }
+    ) => {
+      const user = context.req?.user;
+      if (!user) {
+        throw new AuthenticationError(
+          "You must be logged in to remove a location."
+        );
+      }
+
+      return User.findByIdAndUpdate(
+        user._id,
+        { $pull: { savedLocations: locationId } },
         { new: true }
       ).populate(["savedCryptids", "savedLocations"]);
     },
